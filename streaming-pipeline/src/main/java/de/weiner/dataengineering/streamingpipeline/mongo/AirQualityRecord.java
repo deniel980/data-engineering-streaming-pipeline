@@ -11,10 +11,8 @@ public class AirQualityRecord {
     @Id
     private String id;
 
-    // Rohdaten
     private String rawMessage;
 
-    // Geparste Felder
     private String timestamp;
     private double temperature;
     private double humidity;

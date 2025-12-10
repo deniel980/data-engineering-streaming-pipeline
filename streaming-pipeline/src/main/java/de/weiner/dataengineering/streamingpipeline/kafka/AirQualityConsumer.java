@@ -29,13 +29,11 @@ public class AirQualityConsumer {
 
         String[] parts = message.split(",", -1);
 
-        // 1) Minimal-Check: falsches Format -> nur loggen und überspringen
         if (parts.length != 12) {
             log.warn("Skipping message with unexpected column count {}: {}", parts.length, message);
             return;
         }
 
-        // 2) Safe-Parsing für leere Felder
         String timestamp = parts[0].trim();
         double temperature     = parseDoubleSafe(parts[1]);
         double humidity        = parseDoubleSafe(parts[2]);
