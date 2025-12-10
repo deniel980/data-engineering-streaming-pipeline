@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.time.Instant;
 
@@ -64,8 +65,12 @@ public class AirQualityConsumer {
                 Instant.now()
         );
 
-        repository.save(record);
-        log.info("Saved parsed record to MongoDB with id={}", record.getId());
+        try {
+            AirQualityRecord saved = repository.save(record);
+            log.info("Saved parsed record to MongoDB with id={}", saved.getId());
+        } catch (DuplicateKeyException e) {
+            log.info("Duplicate message for rawMessage='{}', skipping", message);
+        }
     }
 
     private double parseDoubleSafe(String value) {
