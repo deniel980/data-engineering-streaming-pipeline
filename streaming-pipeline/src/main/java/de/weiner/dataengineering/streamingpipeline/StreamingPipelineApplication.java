@@ -1,13 +1,26 @@
 package de.weiner.dataengineering.streamingpipeline;
 
+import de.weiner.dataengineering.streamingpipeline.kafka.AirQualityProducer;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class StreamingPipelineApplication {
+public class StreamingPipelineApplication implements CommandLineRunner {
+
+	private final AirQualityProducer producer;
+
+	public StreamingPipelineApplication(AirQualityProducer producer) {
+		this.producer = producer;
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(StreamingPipelineApplication.class, args);
 	}
 
+	@Override
+	public void run(String... args) throws Exception {
+		String payload = "hello-kafka-" + System.currentTimeMillis();
+		producer.sendTestMessage(payload);
+	}
 }
