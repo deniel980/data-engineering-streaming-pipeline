@@ -24,4 +24,25 @@ public class AirQualityProducer {
         log.info("Sending message to topic {}: {}", topic, payload);
         kafkaTemplate.send(topic, payload);
     }
+
+    public void streamFromCsv() {
+        try (var reader = java.nio.file.Files.newBufferedReader(
+                java.nio.file.Path.of("data/IoT_Indoor_Air_Quality_Dataset.csv"))) {
+
+            String header = reader.readLine(); // skip header
+
+            String line;
+            int count = 0;
+            while ((line = reader.readLine()) != null) {
+                log.info("Sending CSV line {} to topic {}: {}", count, topic, line);
+                kafkaTemplate.send(topic, line);
+                count++;
+            }
+
+            log.info("Finished streaming {} CSV lines", count);
+
+        } catch (Exception e) {
+            log.error("Error while streaming CSV file", e);
+        }
+    }
 }

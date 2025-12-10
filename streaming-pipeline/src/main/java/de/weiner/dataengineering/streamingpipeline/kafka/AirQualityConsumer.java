@@ -27,10 +27,60 @@ public class AirQualityConsumer {
     public void listen(String message) {
         log.info("Received message from Kafka: {}", message);
 
-        AirQualityRecord record =
-                new AirQualityRecord(message, Instant.now());
-        repository.save(record);
+        String[] parts = message.split(",", -1);
 
-        log.info("Saved message to MongoDB with id={}", record.getId());
+        // 1) Minimal-Check: falsches Format -> nur loggen und überspringen
+        if (parts.length != 12) {
+            log.warn("Skipping message with unexpected column count {}: {}", parts.length, message);
+            return;
+        }
+
+        // 2) Safe-Parsing für leere Felder
+        String timestamp = parts[0].trim();
+        double temperature     = parseDoubleSafe(parts[1]);
+        double humidity        = parseDoubleSafe(parts[2]);
+        double co2             = parseDoubleSafe(parts[3]);
+        double pm25            = parseDoubleSafe(parts[4]);
+        double pm10            = parseDoubleSafe(parts[5]);
+        double tvoc            = parseDoubleSafe(parts[6]);
+        double co              = parseDoubleSafe(parts[7]);
+        double lightIntensity  = parseDoubleSafe(parts[8]);
+        boolean motionDetected = "1".equals(parts[9].trim());
+        int occupancyCount     = parseIntSafe(parts[10]);
+        String ventilationStatus = parts[11].trim();
+
+        AirQualityRecord record = new AirQualityRecord(
+                message,
+                timestamp,
+                temperature,
+                humidity,
+                co2,
+                pm25,
+                pm10,
+                tvoc,
+                co,
+                lightIntensity,
+                motionDetected,
+                occupancyCount,
+                ventilationStatus,
+                Instant.now()
+        );
+
+        repository.save(record);
+        log.info("Saved parsed record to MongoDB with id={}", record.getId());
+    }
+
+    private double parseDoubleSafe(String value) {
+        if (value == null) return 0.0;
+        String v = value.trim();
+        if (v.isEmpty()) return 0.0;
+        return Double.parseDouble(v);
+    }
+
+    private int parseIntSafe(String value) {
+        if (value == null) return 0;
+        String v = value.trim();
+        if (v.isEmpty()) return 0;
+        return Integer.parseInt(v);
     }
 }

@@ -18,9 +18,13 @@ public class StreamingPipelineApplication implements CommandLineRunner {
 		SpringApplication.run(StreamingPipelineApplication.class, args);
 	}
 
-	@Override
-	public void run(String... args) throws Exception {
+	public void runTest(String... args) throws Exception {
 		String payload = "hello-kafka-" + System.currentTimeMillis();
 		producer.sendTestMessage(payload);
+	}
+
+	@Override
+	public void run(String... args) throws Exception {
+		producer.streamFromCsv();
 	}
 }
