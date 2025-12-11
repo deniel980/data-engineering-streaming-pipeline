@@ -77,7 +77,7 @@ docker compose up --build
 
 ---
 
-## 4. Verifying the Result in MongoDB
+## 4. Verifying the Result in MongoDB (let the service run for 30-90 seconds)
 
 ### 4.1 Open MongoDB Shell
 
