@@ -1,10 +1,10 @@
 # Streaming Pipeline – Kafka → MongoDB (Indoor Air Quality)
 
-This project implements a simple data streaming pipeline for indoor air quality monitoring:
-- Indoor air quality data is read from a CSV file
-- Each CSV row is sent as a message to a Kafka topic
-- A Spring Boot consumer reads messages from Kafka, parses them and stores structured documents in MongoDB
-- Duplicate messages are prevented via a unique index
+This project implements a data streaming pipeline for monitoring of indoor air quality:
+- Air quality data is ingested from a CSV file
+- Each CSV row is sent as a message to a topic in Kafka
+- Spring Boot consumer reads messages from Kafka, parses and stores them as documents in MongoDB
+- Data duplication prevention is implemented via a unique index
 
 ---
 
@@ -22,30 +22,30 @@ streaming-pipeline/
 │       └── AirQualityRecordRepository.java  # Spring Data repository
 ├── data/
 │   └── IoT_Indoor_Air_Quality_Dataset.csv   # Input dataset
-├── application.yml                           # Spring Boot configuration
-├── docker-compose.yml                        # Multi-container orchestration
-└── Dockerfile                                # Application container image
+├── application.yml                          # Spring Boot configuration
+├── docker-compose.yml                       # Multi-container orchestration
+└── Dockerfile                               # Application container image
 ```
 
 **Component Descriptions:**
 
-- **StreamingPipelineApplication.java** – Starts the Spring Boot application and triggers CSV streaming on startup
-- **AirQualityProducer.java** – Reads the CSV file line-by-line and produces Kafka messages to the configured topic
-- **AirQualityConsumer.java** – Consumes messages from Kafka, parses CSV lines and saves `AirQualityRecord` documents to MongoDB with duplicate protection
-- **AirQualityRecord.java** – MongoDB document model with `rawMessage` field marked as unique to prevent duplicates
-- **AirQualityRecordRepository.java** – Spring Data MongoDB repository interface for database operations
-- **application.yml** – Configures Kafka topic, consumer group ID and MongoDB connection parameters
-- **docker-compose.yml** – Orchestrates Kafka (with Zookeeper), MongoDB and the application container
-- **Dockerfile** – Builds the Docker image for the Spring Boot application with embedded JDK and Maven
+- **StreamingPipelineApplication.java** – Starts the Spring Boot application and CSV streaming on startup
+- **AirQualityProducer.java** – Reads the CSV file by line and produces Kafka messages to the defined topic
+- **AirQualityConsumer.java** – Consumes messages from Kafka, parses CSV datasets and saves them as `AirQualityRecord` documents to MongoDB with duplicate protection
+- **AirQualityRecord.java** – MongoDB document model with `rawMessage` field marked as unique for data duplication protection
+- **AirQualityRecordRepository.java** – Spring Data MongoDB repository for database related operations
+- **application.yml** – Configures Kafka topic, consumer group ID and connection parameters for MongoDB
+- **docker-compose.yml** – Orchestrates Kafka, MongoDB Instance and the SpringBoot application container
+- **Dockerfile** – Builds the Docker image for the Spring Boot service with JDK and Maven embedded
 
 ---
 
 ## 2. Prerequisites
 
-- Docker and Docker Compose installed
-- Internet connection for pulling Docker images
+- installed Docker and Docker Compose
+- Internet connection to pull Docker images
 
-Everything else (JDK, Maven) is handled inside the Docker image.
+Everything else should be handled inside the Docker image.
 
 ---
 
@@ -60,24 +60,20 @@ cd <REPOSITORY_FOLDER>
 
 ### 3.2 Build and Start All Containers
 
-From the project root (where `docker-compose.yml` is located):
+Execute from the project root (where `docker-compose.yml` is located) the following:
 
 ```bash
 docker compose up --build
 ```
 
 **What happens:**
-- Docker builds the application image using the `Dockerfile`
-- Zookeeper, Kafka, MongoDB and the Spring Boot app containers are started
-- On startup, the application reads `data/IoT_Indoor_Air_Quality_Dataset.csv`, sends all rows to Kafka and writes parsed documents to MongoDB
+- Docker will build the application image using existing `Dockerfile`
+- Zookeeper, MongoDB, Kafka and the Spring Boot application containers are started
+- On startup, the application processes `data/IoT_Indoor_Air_Quality_Dataset.csv`, sends datasets to Kafka and writes them as parsed documents to MongoDB
+- the stream speed is throttled to 10 messages/second to stabilize the process across different hardware resources and better vizualize the streaming behavior
 
-### 3.3 Stop the Containers
 
-After 1-2 minutes of runtime (or when processing completes):
 
-```bash
-docker compose down
-```
 
 ---
 
@@ -123,11 +119,19 @@ db.air_quality_events.find().limit(5)
 }
 ```
 
+### 4.3 Stop and remove the Containers
+
+```bash
+docker compose down
+```
+
+
+
 ---
 
 ## 5. Duplicate Prevention
 
-The `AirQualityRecord` model uses a unique index on the `rawMessage` field:
+The `AirQualityRecord` model uses a unique index on the `rawMessage` field for that purpose:
 
 ```java
 @Indexed(unique = true)
@@ -135,17 +139,17 @@ private String rawMessage;
 ```
 
 **How it works:**
-- When the CSV is streamed multiple times, Kafka may receive duplicate messages
-- MongoDB rejects duplicate inserts based on the `rawMessage` unique constraint
+- When the same CSV line is streamed multiple times, Kafka will receive duplicate messages
+- MongoDB will reject duplicate inserts based on the `rawMessage` unique index constraint
 - The application handles `DuplicateKeyException` gracefully and continues processing subsequent messages
-- This ensures idempotent message processing even with Kafka message replay
+- This ensures idempotent processing of messages even with Kafka message replay
 
 ---
 
 ## 6. Documentation
 
-A separate PDF document describes:
-- System architecture and component interactions
+A separate PDF document describes the following:
+- System architecture and its component interactions
 - Design decisions and technology choices
 - Reflection on what worked well
 - Known limitations
@@ -153,10 +157,10 @@ A separate PDF document describes:
 
 ---
 
-## 7. Technology Stack
+## 7. Technology Stack Overview
 
 - **Spring Boot** – Application framework
 - **Apache Kafka** – Message streaming platform
-- **MongoDB** – Document database
+- **MongoDB** – Document-oriented NoSQL database
 - **Docker & Docker Compose** – Containerization and orchestration
 - **Maven** – Dependency management and build tool
